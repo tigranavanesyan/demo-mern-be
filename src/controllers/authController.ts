@@ -3,17 +3,22 @@ import jwt from "jsonwebtoken";
 import { env } from "../config/env";
 import User from "../models/User";
 
+function getCookieOptions() {
+  const isProduction = env.NODE_ENV === "production";
+  return {
+    httpOnly: true,
+    sameSite: isProduction ? ("none" as const) : ("lax" as const),
+    secure: isProduction,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  };
+}
+
 function signToken(userId: string) {
   return jwt.sign({ userId }, env.JWT_SECRET, { expiresIn: "7d" });
 }
 
 function setAuthCookie(res: Response, token: string) {
-  res.cookie("token", token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: env.NODE_ENV === "production",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  res.cookie("token", token, getCookieOptions());
 }
 
 export async function register(req: Request, res: Response) {
@@ -77,7 +82,8 @@ export async function login(req: Request, res: Response) {
 }
 
 export function logout(_: Request, res: Response) {
-  res.clearCookie("token");
+  const { httpOnly, sameSite, secure } = getCookieOptions();
+  res.clearCookie("token", { httpOnly, sameSite, secure });
   return res.json({ message: "Logged out" });
 }
 
