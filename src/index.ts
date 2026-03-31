@@ -9,7 +9,7 @@ async function bootstrap() {
       console.log(`Server running on port ${env.PORT}`);
     });
   } catch (error) {
-    console.error("Server failed to start", error);
+    console.error("Server failed to start.", error);
     process.exit(1);
   }
 }
