@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import Stripe from "stripe";
 import Purchase from "../models/Purchase";
 import StripeWebhookEvent from "../models/StripeWebhookEvent";
+import UsageLedger from "../models/UsageLedger";
 import User from "../models/User";
 import {
   ensureBilling,
@@ -35,10 +36,15 @@ export async function getBillingStatus(req: Request, res: Response) {
     .sort({ createdAt: -1 })
     .limit(5)
     .select("productKey amountTotal currency status fulfilledAt");
+  const usageHistory = await UsageLedger.find({ userId: user._id, metric: "credits" })
+    .sort({ createdAt: -1 })
+    .limit(15)
+    .select("quantity status sourceEventId createdAt");
 
   return res.json({
     billing: formatBillingStatus(user),
     purchases: latestPurchases,
+    usageHistory,
   });
 }
 

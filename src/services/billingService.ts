@@ -2,7 +2,14 @@ import Stripe from "stripe";
 import Purchase from "../models/Purchase";
 import User from "../models/User";
 import UsageLedger from "../models/UsageLedger";
-import { billingCatalog, getIncludedCreditsByPriceId, getStripeClient } from "./stripeService";
+import {
+  billingCatalog,
+  getIncludedCreditsByPriceId,
+  getIntervalFromPriceId,
+  getPlanKeyFromPriceId,
+  getStripeClient,
+  isSubscriptionStatusActive,
+} from "./stripeService";
 
 const RETRY_DELAYS_MS = [500, 1500, 3000];
 
@@ -121,10 +128,19 @@ export function formatBillingStatus(user: {
   const usedCredits = user.billing?.usedCredits ?? 0;
   const remaining = Math.max(includedCredits - usedCredits, 0) + (user.billing?.creditBalance ?? 0);
 
+  const status = user.billing?.subscriptionStatus ?? "inactive";
+  const priceId = user.billing?.subscriptionPriceId ?? null;
+  const activePlanKey =
+    isSubscriptionStatusActive(status) && priceId ? getPlanKeyFromPriceId(priceId) : null;
+  const activeInterval =
+    isSubscriptionStatusActive(status) && priceId ? getIntervalFromPriceId(priceId) : null;
+
   return {
-    subscriptionStatus: user.billing?.subscriptionStatus ?? "inactive",
-    subscriptionPriceId: user.billing?.subscriptionPriceId ?? null,
+    subscriptionStatus: status,
+    subscriptionPriceId: priceId,
     currentPeriodEnd: user.billing?.currentPeriodEnd ?? null,
+    activePlanKey,
+    activeInterval,
     credits: {
       included: includedCredits,
       used: usedCredits,

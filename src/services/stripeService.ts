@@ -77,3 +77,41 @@ export function getIncludedCreditsByPriceId(priceId?: string) {
 
   return 0;
 }
+
+const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "trialing", "past_due"]);
+
+export function getPlanKeyFromPriceId(priceId?: string | null): PlanKey | null {
+  if (!priceId) {
+    return null;
+  }
+
+  for (const key of Object.keys(billingCatalog.plans) as PlanKey[]) {
+    const plan = billingCatalog.plans[key];
+    if (plan.monthlyPriceId === priceId || plan.yearlyPriceId === priceId) {
+      return key;
+    }
+  }
+
+  return null;
+}
+
+export function getIntervalFromPriceId(priceId?: string | null): Interval | null {
+  if (!priceId) {
+    return null;
+  }
+
+  for (const plan of Object.values(billingCatalog.plans)) {
+    if (plan.monthlyPriceId === priceId) {
+      return "monthly";
+    }
+    if (plan.yearlyPriceId === priceId) {
+      return "yearly";
+    }
+  }
+
+  return null;
+}
+
+export function isSubscriptionStatusActive(status?: string | null) {
+  return Boolean(status && ACTIVE_SUBSCRIPTION_STATUSES.has(status));
+}
