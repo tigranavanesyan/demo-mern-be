@@ -37,7 +37,12 @@ export async function register(req: Request, res: Response) {
   setAuthCookie(res, token);
 
   return res.status(201).json({
-    user: { id: user._id.toString(), name: user.name, email: user.email },
+    user: {
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
   });
 }
 
@@ -62,7 +67,12 @@ export async function login(req: Request, res: Response) {
   setAuthCookie(res, token);
 
   return res.json({
-    user: { id: user._id.toString(), name: user.name, email: user.email },
+    user: {
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
   });
 }
 
@@ -72,12 +82,24 @@ export function logout(_: Request, res: Response) {
 }
 
 export async function me(req: Request, res: Response) {
-  const user = await User.findById(req.userId).select("name email");
+  const user = await User.findById(req.userId).select("name email role");
   if (!user) {
     return res.status(404).json({ message: "User not found" });
   }
 
   return res.json({
-    user: { id: user._id.toString(), name: user.name, email: user.email },
+    user: {
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
+  });
+}
+
+export function adminInfo(req: Request, res: Response) {
+  return res.json({
+    message: "Admin access granted",
+    role: req.userRole,
   });
 }
