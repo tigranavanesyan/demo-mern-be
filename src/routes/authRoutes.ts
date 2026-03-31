@@ -5,6 +5,7 @@ import {
   logout,
   me,
   register,
+  updateRole,
 } from "../controllers/authController";
 import { allowRole, protect } from "../middleware/authMiddleware";
 
@@ -14,6 +15,7 @@ authRouter.post("/register", register);
 authRouter.post("/login", login);
 authRouter.post("/logout", logout);
 authRouter.get("/me", protect, me);
+authRouter.patch("/role", protect, updateRole);
 authRouter.get("/admin-info", protect, allowRole(["admin"]), adminInfo);
 
 export default authRouter;

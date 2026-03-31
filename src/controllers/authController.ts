@@ -109,3 +109,33 @@ export function adminInfo(req: Request, res: Response) {
     role: req.userRole,
   });
 }
+
+export async function updateRole(req: Request, res: Response) {
+  const { role } = req.body as { role?: "user" | "admin" };
+
+  if (!req.userId) {
+    return res.status(401).json({ message: "Not authorized" });
+  }
+
+  if (!role || !["user", "admin"].includes(role)) {
+    return res.status(400).json({ message: "Role must be either user or admin" });
+  }
+
+  const user = await User.findById(req.userId).select("name email role");
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  user.role = role;
+  await user.save();
+
+  return res.json({
+    message: "Role updated successfully",
+    user: {
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
+  });
+}
