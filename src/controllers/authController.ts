@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env";
+import { formatBillingStatus } from "../services/billingService";
 import User from "../models/User";
 
 function getCookieOptions() {
@@ -47,6 +48,7 @@ export async function register(req: Request, res: Response) {
       name: user.name,
       email: user.email,
       role: user.role,
+      billing: formatBillingStatus(user),
     },
   });
 }
@@ -77,6 +79,7 @@ export async function login(req: Request, res: Response) {
       name: user.name,
       email: user.email,
       role: user.role,
+      billing: formatBillingStatus(user),
     },
   });
 }
@@ -88,7 +91,7 @@ export function logout(_: Request, res: Response) {
 }
 
 export async function me(req: Request, res: Response) {
-  const user = await User.findById(req.userId).select("name email role");
+  const user = await User.findById(req.userId).select("name email role billing");
   if (!user) {
     return res.status(404).json({ message: "User not found" });
   }
@@ -99,6 +102,7 @@ export async function me(req: Request, res: Response) {
       name: user.name,
       email: user.email,
       role: user.role,
+      billing: formatBillingStatus(user),
     },
   });
 }
@@ -121,7 +125,8 @@ export async function updateRole(req: Request, res: Response) {
     return res.status(400).json({ message: "Role must be either user or admin" });
   }
 
-  const user = await User.findById(req.userId).select("name email role");
+  const userId = (req.body as { userId?: string }).userId ?? req.userId;
+  const user = await User.findById(userId).select("name email role billing");
   if (!user) {
     return res.status(404).json({ message: "User not found" });
   }
@@ -136,6 +141,7 @@ export async function updateRole(req: Request, res: Response) {
       name: user.name,
       email: user.email,
       role: user.role,
+      billing: formatBillingStatus(user),
     },
   });
 }

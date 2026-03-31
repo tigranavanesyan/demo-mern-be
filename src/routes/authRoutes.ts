@@ -15,7 +15,7 @@ authRouter.post("/register", register);
 authRouter.post("/login", login);
 authRouter.post("/logout", logout);
 authRouter.get("/me", protect, me);
-authRouter.patch("/role", protect, updateRole);
+authRouter.patch("/role", protect, allowRole(["admin"]), updateRole);
 authRouter.get("/admin-info", protect, allowRole(["admin"]), adminInfo);
 
 export default authRouter;

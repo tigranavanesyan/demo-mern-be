@@ -6,6 +6,17 @@ export interface IUser {
   email: string;
   password: string;
   role: "user" | "admin";
+  billing?: {
+    stripeCustomerId?: string;
+    subscriptionId?: string;
+    subscriptionItemId?: string;
+    subscriptionStatus?: string;
+    subscriptionPriceId?: string;
+    currentPeriodEnd?: Date;
+    includedCredits: number;
+    usedCredits: number;
+    creditBalance: number;
+  };
 }
 
 interface IUserMethods {
@@ -20,6 +31,17 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true, minlength: 6 },
     role: { type: String, enum: ["user", "admin"], default: "user" },
+    billing: {
+      stripeCustomerId: { type: String, index: true },
+      subscriptionId: { type: String },
+      subscriptionItemId: { type: String },
+      subscriptionStatus: { type: String, default: "inactive" },
+      subscriptionPriceId: { type: String },
+      currentPeriodEnd: { type: Date },
+      includedCredits: { type: Number, default: 0 },
+      usedCredits: { type: Number, default: 0 },
+      creditBalance: { type: Number, default: 0 },
+    },
   },
   { timestamps: true }
 );
