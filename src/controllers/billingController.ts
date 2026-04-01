@@ -32,6 +32,30 @@ export async function getBillingStatus(req: Request, res: Response) {
     return res.status(404).json({ message: "User not found" });
   }
 
+  const hasMissingPeriodEnd =
+    user.billing?.subscriptionStatus === "active" &&
+    user.billing?.subscriptionId &&
+    !user.billing?.currentPeriodEnd;
+  if (hasMissingPeriodEnd) {
+    try {
+      const subscriptionId = user.billing?.subscriptionId;
+      if (!subscriptionId) {
+        throw new Error("Missing subscription id");
+      }
+      const stripe = getStripeClient();
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+      const periodEndUnix = (subscription as Stripe.Subscription & { current_period_end?: number })
+        .current_period_end;
+      if (periodEndUnix) {
+        const billing = ensureBilling(user);
+        billing.currentPeriodEnd = new Date(periodEndUnix * 1000);
+        await user.save();
+      }
+    } catch {
+      // Keep response resilient even if Stripe sync fails.
+    }
+  }
+
   const latestPurchases = await Purchase.find({ userId: user._id, status: "paid" })
     .sort({ createdAt: -1 })
     .limit(5)
