@@ -181,6 +181,16 @@ export async function updateRole(req: Request, res: Response) {
   }
 
   const userId = (req.body as { userId?: string }).userId ?? req.userId;
+  if (userId !== req.userId) {
+    const requester = await User.findById(req.userId).select("role");
+    if (!requester) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    if (requester.role !== "admin") {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+  }
+
   const user = await User.findById(userId).select("name email role billing");
   if (!user) {
     return res.status(404).json({ message: "User not found" });
