@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   adminInfo,
   login,
+  loginWithGoogle,
   logout,
   me,
   register,
@@ -13,6 +14,7 @@ const authRouter = Router();
 
 authRouter.post("/register", register);
 authRouter.post("/login", login);
+authRouter.post("/google", loginWithGoogle);
 authRouter.post("/logout", logout);
 authRouter.get("/me", protect, me);
 authRouter.patch("/role", protect, allowRole(["admin"]), updateRole);

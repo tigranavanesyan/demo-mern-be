@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { OAuth2Client } from "google-auth-library";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env";
 import { formatBillingStatus } from "../services/billingService";
@@ -21,6 +22,8 @@ function signToken(userId: string) {
 function setAuthCookie(res: Response, token: string) {
   res.cookie("token", token, getCookieOptions());
 }
+
+const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID);
 
 export async function register(req: Request, res: Response) {
   const { name, email, password } = req.body as {
@@ -68,6 +71,58 @@ export async function login(req: Request, res: Response) {
   const isValidPassword = await user.comparePassword(password);
   if (!isValidPassword) {
     return res.status(401).json({ message: "Invalid credentials" });
+  }
+
+  const token = signToken(user._id.toString());
+  setAuthCookie(res, token);
+
+  return res.json({
+    user: {
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      billing: formatBillingStatus(user),
+    },
+  });
+}
+
+export async function loginWithGoogle(req: Request, res: Response) {
+  const { credential } = req.body as { credential?: string };
+  if (!credential) {
+    return res.status(400).json({ message: "Google credential is required" });
+  }
+  if (!env.GOOGLE_CLIENT_ID) {
+    return res.status(500).json({ message: "Missing GOOGLE_CLIENT_ID on server" });
+  }
+
+  let payload;
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: env.GOOGLE_CLIENT_ID,
+    });
+    payload = ticket.getPayload();
+  } catch {
+    return res.status(401).json({ message: "Invalid Google credential" });
+  }
+  if (!payload?.email || !payload?.name) {
+    return res.status(400).json({ message: "Google account is missing required profile fields" });
+  }
+
+  const normalizedEmail = payload.email.toLowerCase();
+  let user = await User.findOne({ email: normalizedEmail });
+
+  if (!user) {
+    const generatedPassword = `${Math.random().toString(36).slice(2)}${Date.now()}`;
+    user = await User.create({
+      name: payload.name,
+      email: normalizedEmail,
+      password: generatedPassword,
+    });
+  } else if (!user.name && payload.name) {
+    user.name = payload.name;
+    await user.save();
   }
 
   const token = signToken(user._id.toString());

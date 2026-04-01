@@ -7,6 +7,7 @@ export const env = {
   MONGODB_URI:
     process.env.MONGODB_URI ?? "mongodb://127.0.0.1:27017/mern_auth_starter",
   JWT_SECRET: process.env.JWT_SECRET ?? "change_this_secret",
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ?? "",
   CLIENT_URL: process.env.CLIENT_URL ?? "http://localhost:5173",
   CLIENT_APP_URL: process.env.CLIENT_APP_URL ?? process.env.CLIENT_URL ?? "http://localhost:5173",
   NODE_ENV: process.env.NODE_ENV ?? "development",
